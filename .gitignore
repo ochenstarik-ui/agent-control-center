@@ -1,0 +1,31 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build, cache and local state
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.tmp/
+.omo/
+*.log
+__pycache__/
+*.py[cod]
+.venv/
+
+# Specification rendering artifacts
+*.tmp.docx
+*.tmp.pdf
