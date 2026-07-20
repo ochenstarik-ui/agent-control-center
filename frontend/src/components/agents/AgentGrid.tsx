@@ -23,6 +23,8 @@ export function AgentGrid() {
         tokens_limit: 200000,
         budget_used: [12.4, 42.5, 5.2, 28.0][i] || 20,
         budget_limit: 100,
+        account: ['kimi-k2.7-main', 'kimi-k2.7-fast', 'gemini-3-flash', 'deepseek-v4-pro'][i] || '?',
+        provider: ['OpenCode Go', 'OpenCode Go', 'Google', 'NVIDIA'][i] || '?',
       }))
       setAgents(mapped)
       return mapped

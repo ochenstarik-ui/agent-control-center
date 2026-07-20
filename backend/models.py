@@ -14,6 +14,8 @@ class Agent(BaseModel):
     tokens_limit: int = 100000
     budget_used: float = 0
     budget_limit: float = 50
+    account: str = ""
+    provider: str = ""
 
 class AgentUpdate(BaseModel):
     status: Literal["online", "offline", "busy"]

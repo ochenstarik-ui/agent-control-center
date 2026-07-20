@@ -19,12 +19,22 @@ export function AgentCard({ agent }: { agent: any }) {
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className={`w-5 h-5 rounded-2xl ${statusColor} flex-shrink-0 ring-4 ring-background`} />
-          <div>
-            <div className="font-semibold text-xl tracking-tight">{agent.name}</div>
-            <div className="text-muted-foreground text-sm">{agent.runtime} · {agent.model}</div>
+        <div>
+          <div className="flex items-center gap-4">
+            <div className={`w-5 h-5 rounded-2xl ${statusColor} flex-shrink-0 ring-4 ring-background`} />
+            <div>
+              <div className="font-semibold text-xl tracking-tight">{agent.name}</div>
+              <div className="text-muted-foreground text-sm">{agent.runtime} · {agent.model}</div>
+            </div>
           </div>
+          {agent.provider && (
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <div className="px-2.5 py-0.5 bg-secondary rounded-full text-muted-foreground">
+                {agent.provider}
+              </div>
+              <div className="text-muted-foreground font-mono">{agent.account}</div>
+            </div>
+          )}
         </div>
         <div className="text-xs uppercase tracking-widest text-emerald-500 font-medium">{agent.status}</div>
       </div>
