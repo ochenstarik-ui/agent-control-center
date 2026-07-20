@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion'
-import { Cpu, Activity, Zap, Wallet } from 'lucide-react'
-import { Progress } from '@/components/ui/progress'
+import { Cpu, Activity } from 'lucide-react'
 
 export function AgentCard({ agent }: { agent: any }) {
   const statusColor = {
@@ -13,84 +11,72 @@ export function AgentCard({ agent }: { agent: any }) {
   const budgetPercent = Math.round((agent.budget_used / agent.budget_limit) * 100)
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.02, y: -4 }}
-      className="group bg-card/80 border border-border hover:border-primary/50 rounded-3xl p-6 transition-all duration-300 backdrop-blur-xl"
-    >
+    <div className="bg-card border border-border hover:border-primary/50 p-8 transition-colors group">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <div className="flex items-center gap-4">
-            <div className={`w-5 h-5 rounded-2xl ${statusColor} flex-shrink-0 ring-4 ring-background`} />
-            <div>
-              <div className="font-semibold text-xl tracking-tight">{agent.name}</div>
-              <div className="text-muted-foreground text-sm">{agent.runtime} · {agent.model}</div>
-            </div>
+          <div className="flex items-center gap-3">
+            <div className={`w-4 h-4 ${statusColor} flex-shrink-0`} />
+            <div className="text-2xl font-mono font-bold tracking-tighter">{agent.name}</div>
           </div>
+          <div className="text-muted-foreground mt-1 text-sm">{agent.runtime} · {agent.model}</div>
           {agent.provider && (
-            <div className="mt-3 flex items-center gap-2 text-xs">
-              <div className="px-2.5 py-0.5 bg-secondary rounded-full text-muted-foreground">
-                {agent.provider}
-              </div>
-              <div className="text-muted-foreground font-mono">{agent.account}</div>
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span className="bg-secondary px-3 py-1">{agent.provider}</span>
+              <span className="font-mono text-muted-foreground">{agent.account}</span>
             </div>
           )}
         </div>
-        <div className="text-xs uppercase tracking-widest text-emerald-500 font-medium">{agent.status}</div>
+        <div className="text-emerald-500 text-xs uppercase tracking-[2px] font-medium">{agent.status}</div>
       </div>
 
-      {/* Main metrics */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className="flex items-center gap-3">
-          <Cpu className="w-6 h-6 text-muted-foreground" />
-          <div>
-            <div className="text-3xl font-mono font-semibold tabular-nums">{agent.cpu}</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground -mt-1">CPU %</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Activity className="w-6 h-6 text-muted-foreground" />
-          <div>
-            <div className="text-3xl font-mono font-semibold tabular-nums">{agent.active_runs || agent.activeRuns}</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground -mt-1">RUNS</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Per-agent Usage Limits */}
-      <div className="space-y-4 text-sm border-t border-border pt-5">
+      {/* Metrics */}
+      <div className="grid grid-cols-2 gap-10 mb-10">
         <div>
-          <div className="flex justify-between mb-1.5">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <Zap className="w-4 h-4" /> Tokens
-            </span>
-            <span className="font-mono text-muted-foreground text-xs">
-              {agent.tokens_used?.toLocaleString()} / {agent.tokens_limit?.toLocaleString()}
-            </span>
+          <div className="flex items-center gap-2 mb-1">
+            <Cpu className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">CPU %</span>
           </div>
-          <Progress value={tokenPercent} />
+          <div className="text-5xl font-mono font-bold tabular-nums">{agent.cpu}</div>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">RUNS</span>
+          </div>
+          <div className="text-5xl font-mono font-bold tabular-nums">{agent.active_runs || agent.activeRuns}</div>
+        </div>
+      </div>
+
+      {/* Limits */}
+      <div className="space-y-6">
+        <div>
+          <div className="flex justify-between text-xs mb-2 text-muted-foreground">
+            <span className="uppercase tracking-wider">Tokens</span>
+            <span className="font-mono">{agent.tokens_used?.toLocaleString()} / {agent.tokens_limit?.toLocaleString()}</span>
+          </div>
+          <div className="h-1 bg-secondary">
+            <div className="h-1 bg-foreground transition-all duration-500" style={{ width: `${tokenPercent}%` }} />
+          </div>
         </div>
 
         <div>
-          <div className="flex justify-between mb-1.5">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <Wallet className="w-4 h-4" /> Budget
-            </span>
-            <span className="font-mono text-muted-foreground text-xs">
-              ${agent.budget_used} / ${agent.budget_limit}
-            </span>
+          <div className="flex justify-between text-xs mb-2 text-muted-foreground">
+            <span className="uppercase tracking-wider">Budget</span>
+            <span className="font-mono">${agent.budget_used} / ${agent.budget_limit}</span>
           </div>
-          <Progress value={budgetPercent} />
+          <div className="h-1 bg-secondary">
+            <div className="h-1 bg-foreground transition-all duration-500" style={{ width: `${budgetPercent}%` }} />
+          </div>
         </div>
       </div>
 
       <button
         onClick={() => alert('Handoff started for ' + agent.name)}
-        className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+        className="mt-10 w-full border border-border hover:bg-secondary py-4 text-sm font-medium tracking-widest uppercase transition-colors"
       >
-        <Zap className="w-4 h-4" />
         Quick Handoff
       </button>
-    </motion.div>
+    </div>
   )
 }

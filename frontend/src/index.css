@@ -27,10 +27,7 @@ body {
   font-feature-settings: "tnum";
   -webkit-font-smoothing: antialiased;
 }
-.card {
-  background: rgba(24, 24, 27, 0.8);
-  backdrop-filter: blur(20px);
-}
+.card, [class*="rounded-"] { border-radius: 4px !important; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(240 3.7% 25%); border-radius: 3px; }
