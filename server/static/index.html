@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Control Center</title>
+<style>
+:root, .dark {
+  --bg: #0d1117; --card: #161b22; --border: #30363d;
+  --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+  --green: #3fb950; --red: #f85149; --orange: #d2991d;
+  --radius: 8px;
+}
+.light {
+  --bg: #fff; --card: #f6f8fa; --border: #d0d7de;
+  --text: #1f2328; --muted: #656d76; --accent: #0969da;
+  --green: #1a7f37; --red: #cf222e; --orange: #9a6700;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; font-size: var(--font-size, 14px); }
+.header { background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-height: 42px; }
+.header h1 { font-size: 15px; font-weight: 600; }
+.header .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.hdr-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.hdr-btn:hover { color: var(--text); border-color: var(--accent); }
+
+.layout { display: grid; grid-template-columns: 260px 300px 1fr; flex: 1; overflow: hidden; }
+.layout.no-proj { grid-template-columns: 260px 1fr; }
+.layout.no-proj #col2 { display: none !important; }
+.panel { border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.panel-header { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.panel-header h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+.panel-body { flex: 1; overflow-y: auto; }
+
+.item { padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em; }
+.item:hover { background: rgba(255,255,255,0.04); }
+.item.active { background: rgba(88,166,255,0.1); border-right: 2px solid var(--accent); }
+.item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .actions { display: none; gap: 2px; margin-left: auto; }
+.item:hover .actions { display: flex; }
+.item .actions button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 1px 3px; }
+.item .actions button:hover { color: var(--text); }
+.item .actions button.danger:hover { color: var(--red); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.sub-text { font-size: 0.75em; color: var(--muted); }
+
+/* Chat area */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+.tabs { display: flex; gap: 2px; padding: 8px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab { padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; border: 1px solid transparent; color: var(--muted); }
+.tab.active { background: var(--card); border-color: var(--border); color: var(--text); }
+.messages { flex: 1; overflow-y: auto; padding: 14px; }
+.msg { margin-bottom: 10px; max-width: 80%; }
+.msg.user { margin-left: auto; }
+.msg.user .bubble { background: var(--accent); color: #000; border-radius: 10px 10px 4px 10px; }
+.msg.agent .bubble { background: var(--card); border: 1px solid var(--border); border-radius: 10px 10px 10px 4px; }
+.msg.system .bubble { background: transparent; color: var(--muted); font-size: 0.8em; text-align: center; max-width: 100%; }
+.bubble { padding: 8px 12px; font-size: 0.9em; line-height: 1.5; white-space: pre-wrap; }
+.msg .meta { font-size: 0.65em; color: var(--muted); margin-top: 2px; padding: 0 4px; }
+.input-area { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.input-area textarea { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 8px 12px; font-size: 0.9em; resize: none; font-family: inherit; min-height: 38px; max-height: 80px; }
+.input-area textarea:focus { outline: none; border-color: var(--accent); }
+.input-area button { background: var(--accent); color: #000; border: none; border-radius: var(--radius); padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 0.9em; }
+
+/* Project detail column */
+.proj-detail { display: flex; flex-direction: column; }
+.proj-section { border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.proj-section-header { padding: 8px 12px; font-size: 0.75em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+.proj-section-body { padding: 4px 12px 8px; }
+
+input, textarea, select { font-family: inherit; }
+.fld { width: 100%; padding: 5px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 0.8em; margin-bottom: 4px; }
+.fld:focus { outline: none; border-color: var(--accent); }
+.btn { padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: 600; border: none; }
+.btn-accent { background: var(--accent); color: #000; }
+.btn-muted { background: var(--border); color: var(--text); }
+.btn-danger { background: var(--red); color: #fff; }
+
+.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8em; }
+.toggle-switch { width: 32px; height: 18px; background: var(--border); border-radius: 9px; position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle-switch.on { background: var(--green); }
+.toggle-switch::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left 0.2s; }
+.toggle-switch.on::after { left: 16px; }
+
+.file-row { display: flex; align-items: center; gap: 4px; font-size: 0.75em; padding: 2px 0; }
+.file-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.empty { color: var(--muted); font-size: 0.8em; padding: 4px 0; }
+
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.dialog { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; min-width: 300px; max-width: 450px; }
+.dialog h4 { margin-bottom: 8px; font-size: 1em; }
+.dialog p { font-size: 0.85em; color: var(--muted); margin-bottom: 14px; }
+.dialog .btns { display: flex; gap: 6px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="dot"></span>
+  <h1>Agent Control Center</h1>
+  <div style="margin-left:auto;display:flex;gap:4px">
+    <button onclick="switchTab('skills')" class="hdr-btn" title="Скиллы">📦</button>
+    <button onclick="switchTab('memory')" class="hdr-btn" title="Память">🧠</button>
+    <button onclick="switchTab('supervisor-log')" class="hdr-btn" title="Лог надзора">👁</button>
+    <button onclick="switchTab('settings')" class="hdr-btn" title="Настройки">⚙</button>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- COL 1: Agents + Projects -->
+  <div class="panel" id="col1">
+    <div class="panel-header"><h3>🤖 Агенты</h3><span class="sub-text" id="agent-count">0</span></div>
+    <div class="panel-body" id="agents-body"></div>
+    <div class="panel-header" style="border-top:1px solid var(--border)"><h3>📁 Проекты</h3><button onclick="showNewProject()" class="hdr-btn">+</button></div>
+    <div class="panel-body" id="projects-body" style="flex:1"></div>
+  </div>
+
+  <!-- COL 2: Project detail -->
+  <div class="panel proj-detail" id="col2" style="display:none">
+    <div class="panel-header"><h3 id="proj-detail-name">Проект</h3></div>
+    <div class="panel-body" id="proj-detail-body">
+      <div class="empty" style="padding:12px">Выберите проект</div>
+    </div>
+  </div>
+
+  <!-- COL 3: Chat -->
+  <div class="main">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('chat')">💬 Чат</div>
+    </div>
+    <div id="tab-chat" class="messages" id="messages">
+      <div class="msg system"><div class="bubble">Выберите агента и проект слева, затем напишите задачу</div></div>
+    </div>
+    <div id="tab-skills" style="display:none;flex:1;overflow-y:auto;padding:14px"><h3>📦 Скиллы</h3><div id="skills-list"></div></div>
+    <div id="tab-memory" style="display:none;flex:1;overflow-y:auto;padding:14px"><h3>🧠 Память</h3><div id="memory-entries"></div><div class="input-area" style="border-top:none;padding:8px 0"><input id="mem-input" placeholder="Новая запись..." class="fld" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')saveMemory()"><button onclick="saveMemory()" class="btn btn-accent">💾</button></div></div>
+    <div id="tab-supervisor-log" style="display:none;flex:1;overflow-y:auto;padding:14px"><h3>👁 Лог надзирателя</h3><div id="supervisor-log"></div></div>
+    <div id="tab-settings" style="display:none;flex:1;overflow-y:auto;padding:14px"><h3>⚙ Настройки</h3><div id="settings-content"></div></div>
+    <div class="input-area">
+      <textarea id="input" placeholder="Опиши задачу... (Enter — отправить)" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendRun()}"></textarea>
+      <button id="send-btn" onclick="sendRun()">▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dlg" style="display:none">
+  <div class="dialog" id="dlg-content"></div>
+</div>
+
+<script>
+const API = 'http://localhost:8100';
+let activeAgent = null, activeProject = null;
+
+// ── Storage ──────────────────────────────────────────
+let projects = JSON.parse(localStorage.getItem('acc_projects_v2') || '[]');
+function save() { localStorage.setItem('acc_projects_v2', JSON.stringify(projects)); }
+
+// ── Agents ───────────────────────────────────────────
+async function loadAgents() {
+  try {
+    const r = await fetch(API + '/api/v1/agents/health');
+    const data = await r.json();
+    document.getElementById('agent-count').textContent = Object.keys(data).length;
+    let h = '';
+    for (const [id, info] of Object.entries(data)) {
+      h += `<div class="item${activeAgent===id?' active':''}" onclick="selectAgent('${id}')">
+        <span class="status-dot" style="background:${info.healthy?'var(--green)':'var(--red)'}"></span>
+        <span class="name">${id.replace('worker-','')}</span>
+        <span class="sub-text">${(info.model||'').split('/').pop()}</span>
+      </div>`;
+    }
+    document.getElementById('agents-body').innerHTML = h || '<div class="empty" style="padding:8px">Нет агентов</div>';
+  } catch(e) {}
+}
+function selectAgent(id) { activeAgent = id; loadAgents(); addMsg('system', 'Агент: ' + id.replace('worker-','')); }
+
+// ── Projects ─────────────────────────────────────────
+function renderProjects() {
+  const body = document.getElementById('projects-body');
+  if (!projects.length) {
+    body.innerHTML = '<div class="empty" style="padding:8px">Нет проектов. Нажмите +</div>';
+    return;
+  }
+  body.innerHTML = projects.map(p => `
+    <div class="item${activeProject===p.id?' active':''}" onclick="openProject('${p.id}')">
+      <span class="name">📁 ${esc(p.name)}</span>
+      <div class="actions">
+        <button onclick="event.stopPropagation();deleteProject('${p.id}')" class="danger" title="Удалить">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showNewProject() {
+  const dlg = document.getElementById('dlg');
+  document.getElementById('dlg-content').innerHTML = `
+    <h4>Новый проект</h4>
+    <input id="new-proj-name" class="fld" placeholder="Название проекта" autofocus>
+    <textarea id="new-proj-desc" class="fld" placeholder="Описание (опционально)" rows="2" style="resize:vertical"></textarea>
+    <div class="btns">
+      <button onclick="closeDlg()" class="btn btn-muted">Отмена</button>
+      <button onclick="createProject()" class="btn btn-accent">Создать</button>
+    </div>`;
+  dlg.style.display = 'flex';
+  document.getElementById('new-proj-name').focus();
+}
+
+function createProject() {
+  const name = document.getElementById('new-proj-name').value.trim();
+  if (!name) return;
+  const desc = document.getElementById('new-proj-desc').value.trim();
+  projects.push({
+    id: Date.now().toString(36), name, description: desc,
+    supervisor: { enabled: false, rules: '' },
+    connectors: [],
+    files: [],
+    folder: '',
+    tasks: []
+  });
+  save(); renderProjects(); closeDlg();
+}
+
+function openProject(id) {
+  activeProject = id;
+  renderProjects();
+  renderProjectDetail();
+  document.getElementById('col2').style.display = 'flex';
+  document.querySelector('.layout').classList.remove('no-proj');
+}
+
+function deleteProject(id) {
+  const p = projects.find(p => p.id === id);
+  showConfirm('Удалить проект «' + p.name + '»?', () => {
+    projects = projects.filter(p => p.id !== id);
+    if (activeProject === id) {
+      activeProject = null;
+      document.getElementById('col2').style.display = 'none';
+      document.querySelector('.layout').classList.add('no-proj');
+    }
+    save(); renderProjects();
+  });
+}
+
+// ── Project Detail ───────────────────────────────────
+function renderProjectDetail() {
+  const p = projects.find(p => p.id === activeProject);
+  if (!p) return;
+  document.getElementById('proj-detail-name').textContent = '📁 ' + p.name;
+  const body = document.getElementById('proj-detail-body');
+
+  // Supervisor
+  const sup = p.supervisor || {};
+  let html = `<div class="proj-section">
+    <div class="proj-section-header">👁 Надзиратель
+      <span class="toggle" onclick="toggleSupervisor()">
+        <span class="toggle-switch${sup.enabled?' on':''}"></span>
+      </span>
+    </div>
+    <div class="proj-section-body">
+      <textarea class="fld" id="sup-rules" placeholder="Правила мониторинга (напр: следить за задачами, переключать агента при отказе)" rows="3" onchange="saveSupRules(this.value)">${esc(sup.rules||'')}</textarea>
+    </div>
+  </div>`;
+
+  // Connectors
+  html += `<div class="proj-section">
+    <div class="proj-section-header">🔗 Коннекторы <button onclick="addConnector()" class="hdr-btn">+</button></div>
+    <div class="proj-section-body" id="connectors-list">`;
+  (p.connectors||[]).forEach((c,i) => {
+    html += `<div class="file-row"><span>${connIcon(c.type)}</span><span class="name">${esc(c.label||c.account||c.type)}</span>${c.token_valid?'<span style="color:var(--green);font-size:0.7em">●</span>':'<span style="color:var(--red);font-size:0.7em">○</span>'}<button onclick="removeConnector(${i})" class="hdr-btn danger">✕</button></div>`;
+  });
+  html += `</div></div>`;
+
+  // Files
+  html += `<div class="proj-section">
+    <div class="proj-section-header">📄 Файлы проекта <button onclick="pickFile()" class="hdr-btn">+</button></div>
+    <div class="proj-section-body" id="files-list">`;
+  (p.files||[]).forEach((f,i) => {
+    html += `<div class="file-row"><span>📄</span><span class="name">${esc(f.name||f)}</span><button onclick="removeFile(${i})" class="hdr-btn danger">✕</button></div>`;
+  });
+  html += `<input type="file" id="file-picker" style="display:none" onchange="onFilePicked(event)" multiple></div></div>`;
+
+  // Folder
+  html += `<div class="proj-section">
+    <div class="proj-section-header">📂 Папка проекта <button onclick="pickFolder()" class="hdr-btn">+</button></div>
+    <div class="proj-section-body" id="folder-body">
+      ${p.folder ? `<div class="file-row"><span>📂</span><span class="name">${esc(p.folder)}</span><button onclick="clearFolder()" class="hdr-btn danger">✕</button></div>` : '<div class="empty">Путь не выбран</div>'}
+    </div>
+  </div>`;
+
+  // Tasks
+  html += `<div class="proj-section" style="flex:1;overflow-y:auto">
+    <div class="proj-section-header">📋 Задачи <button onclick="addProjectTask()" class="hdr-btn">+</button></div>
+    <div class="proj-section-body" id="proj-tasks-list">`;
+  (p.tasks||[]).forEach((t,i) => {
+    html += `<div class="file-row" style="padding:3px 0">
+      <span style="cursor:pointer" onclick="toggleProjTask(${i})">${t.done?'✅':'○'}</span>
+      <span class="name" style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(t.text)}</span>
+      <button onclick="sendTaskToChat(${i})" class="hdr-btn" title="Отправить в чат">💬</button>
+      <button onclick="removeProjTask(${i})" class="hdr-btn danger">✕</button>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  body.innerHTML = html;
+}
+
+function toggleSupervisor() {
+  const p = projects.find(p => p.id === activeProject);
+  if (!p) return;
+  p.supervisor.enabled = !p.supervisor.enabled;
+  save(); renderProjectDetail();
+}
+function saveSupRules(v) {
+  const p = projects.find(p => p.id === activeProject);
+  if (p) { p.supervisor.rules = v; save(); }
+}
+function addConnector() {
+  const dlg = document.getElementById('dlg');
+  document.getElementById('dlg-content').innerHTML = `
+    <h4>Добавить коннектор</h4>
+    <p style="font-size:0.8em;color:var(--muted)">Выберите сервис для подключения. Потребуется авторизация OAuth.</p>
+    <select id="conn-type" class="fld">
+      <option value="github">🐙 GitHub — репозитории, issues, PR</option>
+      <option value="gmail">📧 Gmail — чтение почты</option>
+      <option value="gdrive">📂 Google Диск — файлы и папки</option>
+      <option value="ydisk">📂 Яндекс.Диск — файлы и папки</option>
+      <option value="gcal">📅 Google Календарь — события</option>
+    </select>
+    <div id="conn-status" style="font-size:0.8em;color:var(--orange);margin:8px 0"></div>
+    <div class="btns">
+      <button onclick="closeDlg()" class="btn btn-muted">Отмена</button>
+      <button onclick="connectOAuth()" class="btn btn-accent" id="conn-connect-btn">🔑 Подключить</button>
+    </div>`;
+  dlg.style.display = 'flex';
+}
+
+async function connectOAuth() {
+  const type = document.getElementById('conn-type').value;
+  const btn = document.getElementById('conn-connect-btn');
+  btn.disabled = true;
+  btn.textContent = 'Подключение...';
+  
+  try {
+    // Call backend OAuth init endpoint
+    const r = await fetch(API + '/api/v1/connectors/oauth/init', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ provider: type, project_id: activeProject })
+    });
+    const data = await r.json();
+    
+    if (data.auth_url) {
+      // Open OAuth URL in browser
+      window.open(data.auth_url, '_blank');
+      document.getElementById('conn-status').textContent = '⏳ Ожидание авторизации в браузере...';
+      // Poll for completion
+      pollConnectorAuth(data.state);
+    } else if (data.connected) {
+      addConnectorToList(type, data);
+    }
+  } catch(e) {
+    document.getElementById('conn-status').textContent = '❌ Сервер OAuth недоступен. Будет работать после настройки бэкенда.';
+    btn.disabled = false;
+    btn.textContent = '🔑 Подключить';
+  }
+}
+
+async function pollConnectorAuth(state) {
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const r = await fetch(API + '/api/v1/connectors/oauth/check?state=' + state);
+      const d = await r.json();
+      if (d.connected) {
+        addConnectorToList(d.provider, d);
+        closeDlg();
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('conn-status').textContent = '⏰ Таймаут авторизации. Попробуйте снова.';
+  document.getElementById('conn-connect-btn').disabled = false;
+  document.getElementById('conn-connect-btn').textContent = '🔑 Подключить';
+}
+
+function addConnectorToList(type, data) {
+  const p = projects.find(p => p.id === activeProject);
+  if (!p.connectors) p.connectors = [];
+  p.connectors.push({
+    type,
+    label: data.label || data.account || type,
+    account: data.account,
+    token_valid: true,
+    connected_at: new Date().toISOString()
+  });
+  save(); renderProjectDetail();
+}
+function removeConnector(i) {
+  const p = projects.find(p => p.id === activeProject);
+  p.connectors.splice(i, 1); save(); renderProjectDetail();
+}
+function pickFile() { document.getElementById('file-picker').click(); }
+function onFilePicked(e) {
+  const p = projects.find(p => p.id === activeProject);
+  for (const f of e.target.files) {
+    p.files.push({ name: f.name, size: f.size, path: f.webkitRelativePath || f.name });
+  }
+  save(); renderProjectDetail();
+}
+function removeFile(i) {
+  const p = projects.find(p => p.id === activeProject);
+  p.files.splice(i, 1); save(); renderProjectDetail();
+}
+function pickFolder() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.webkitdirectory = true;
+  inp.onchange = function(e) {
+    const files = e.target.files;
+    if (files.length) {
+      const fullPath = files[0].webkitRelativePath;
+      const folder = fullPath.split('/')[0];
+      const p = projects.find(p => p.id === activeProject);
+      p.folder = folder;
+      save(); renderProjectDetail();
+    }
+  };
+  inp.click();
+}
+function clearFolder() {
+  const p = projects.find(p => p.id === activeProject);
+  p.folder = ''; save(); renderProjectDetail();
+}
+function addProjectTask() {
+  const dlg = document.getElementById('dlg');
+  document.getElementById('dlg-content').innerHTML = `
+    <h4>Новая задача</h4>
+    <textarea id="new-task-text" class="fld" placeholder="Текст задачи" rows="3" autofocus onkeydown="if(event.key==='Enter'&&event.ctrlKey)saveNewTask()"></textarea>
+    <div class="btns">
+      <button onclick="closeDlg()" class="btn btn-muted">Отмена</button>
+      <button onclick="saveNewTask()" class="btn btn-accent">Добавить</button>
+    </div>`;
+  dlg.style.display = 'flex';
+  document.getElementById('new-task-text').focus();
+}
+function saveNewTask() {
+  const text = document.getElementById('new-task-text').value.trim();
+  if (!text) return;
+  const p = projects.find(p => p.id === activeProject);
+  p.tasks.push({ text, done: false });
+  save(); renderProjectDetail(); closeDlg();
+}
+function toggleProjTask(i) {
+  const p = projects.find(p => p.id === activeProject);
+  p.tasks[i].done = !p.tasks[i].done;
+  save(); renderProjectDetail();
+}
+function removeProjTask(i) {
+  const p = projects.find(p => p.id === activeProject);
+  showConfirm('Удалить задачу «' + p.tasks[i].text + '»?', () => {
+    p.tasks.splice(i, 1); save(); renderProjectDetail();
+  });
+}
+function sendTaskToChat(i) {
+  const p = projects.find(p => p.id === activeProject);
+  document.getElementById('input').value = p.tasks[i].text;
+  switchTab('chat');
+}
+
+// ── Chat ─────────────────────────────────────────────
+function addMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = '<div class="bubble">' + text + '</div><div class="meta">' + new Date().toLocaleTimeString() + '</div>';
+  document.getElementById('tab-chat').appendChild(div);
+  div.scrollIntoView({behavior:'smooth'});
+}
+async function sendRun() {
+  if (!activeAgent) { addMsg('system', '⚠️ Выберите агента'); return; }
+  const goal = document.getElementById('input').value.trim();
+  if (!goal) return;
+  document.getElementById('input').value = '';
+  document.getElementById('send-btn').disabled = true;
+  addMsg('user', goal);
+  try {
+    const r = await fetch(API + '/api/v1/runs', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({agent: activeAgent, goal})
+    });
+    const run = await r.json();
+    addMsg('agent', '✅ Задача ' + run.run_id + ' запущена');
+  } catch(e) { addMsg('system', '❌ ' + e.message); }
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ── Tabs ─────────────────────────────────────────────
+function switchTab(tab) {
+  ['chat','skills','memory','supervisor-log','settings'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (tab === 'chat') document.querySelector('.tab')?.classList.add('active');
+  if (tab === 'skills') loadSkills();
+  if (tab === 'memory') loadMemory();
+  if (tab === 'supervisor-log') loadSupLog();
+}
+
+// ── Skills ───────────────────────────────────────────
+async function loadSkills() {
+  try {
+    const r = await fetch(API + '/api/v1/skills');
+    const d = await r.json();
+    document.getElementById('skills-list').innerHTML = (d.skills||[]).map(s => '<div class="file-row"><span>📦 ' + esc(s.name) + '</span><span class="sub-text">' + esc(s.category||'') + '</span></div>').join('') || '<div class="empty">Нет скиллов</div>';
+  } catch(e) {}
+}
+
+// ── Memory ───────────────────────────────────────────
+async function loadMemory() {
+  try {
+    const r = await fetch(API + '/api/v1/memory?limit=50');
+    const d = await r.json();
+    document.getElementById('memory-entries').innerHTML = (d.entries||[]).map(e => '<div class="file-row">' + esc(e.line) + '</div>').join('') || '<div class="empty">Нет записей</div>';
+  } catch(e) {}
+}
+async function saveMemory() {
+  const v = document.getElementById('mem-input').value.trim();
+  if (!v) return;
+  await fetch(API + '/api/v1/memory/' + Date.now(), {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:String(Date.now()),value:v})});
+  document.getElementById('mem-input').value = '';
+  loadMemory();
+}
+
+// ── Supervisor Log ───────────────────────────────────
+let supLog = JSON.parse(localStorage.getItem('acc_sup_log')||'[]');
+function addSupLog(msg) {
+  supLog.push({time: new Date().toLocaleTimeString(), msg});
+  supLog = supLog.slice(-100);
+  localStorage.setItem('acc_sup_log', JSON.stringify(supLog));
+}
+function loadSupLog() {
+  document.getElementById('supervisor-log').innerHTML = supLog.map(l => '<div class="file-row">[' + l.time + '] ' + l.msg + '</div>').join('') || '<div class="empty">Нет событий</div>';
+}
+
+// ── Settings ─────────────────────────────────────────
+let settings = JSON.parse(localStorage.getItem('acc_settings')||'{"theme":"dark","fontsize":"14"}');
+function loadSettings() {
+  document.documentElement.className = settings.theme || 'dark';
+  document.documentElement.style.setProperty('--font-size', (settings.fontsize||14)+'px');
+  document.getElementById('settings-content').innerHTML = `
+    <div style="margin-bottom:12px"><label class="sub-text">Тема</label><br>
+      <select class="fld" onchange="setSetting('theme',this.value)"><option value="dark" ${settings.theme==='dark'?'selected':''}>🌙 Тёмная</option><option value="light" ${settings.theme==='light'?'selected':''}>☀️ Светлая</option></select></div>
+    <div style="margin-bottom:12px"><label class="sub-text">Шрифт</label><br>
+      <select class="fld" onchange="setSetting('fontsize',this.value)"><option value="12" ${settings.fontsize==='12'?'selected':''}>12px</option><option value="14" ${settings.fontsize==='14'?'selected':''}>14px</option><option value="16" ${settings.fontsize==='16'?'selected':''}>16px</option><option value="18" ${settings.fontsize==='18'?'selected':''}>18px</option></select></div>
+    <button onclick="localStorage.clear();location.reload()" class="btn btn-danger">🗑 Сбросить всё</button>`;
+}
+function setSetting(k,v) { settings[k]=v; localStorage.setItem('acc_settings',JSON.stringify(settings)); loadSettings(); }
+
+// ── Utils ────────────────────────────────────────────
+function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function connIcon(t) { return {github:'🐙',gmail:'📧',gdrive:'📂',ydisk:'📂',gcal:'📅'}[t]||'🔗'; }
+function closeDlg() { document.getElementById('dlg').style.display = 'none'; }
+function showConfirm(text, cb) {
+  document.getElementById('dlg-content').innerHTML = '<h4>Подтверждение</h4><p>' + text + '</p><div class="btns"><button onclick="closeDlg()" class="btn btn-muted">Отмена</button><button onclick="closeDlg();cb()" class="btn btn-danger">Удалить</button></div>';
+  document.getElementById('dlg').style.display = 'flex';
+}
+
+// ── Start ────────────────────────────────────────────
+loadSettings();
+loadAgents();
+renderProjects();
+setInterval(loadAgents, 30000);
+// No project selected yet — use 2-column layout
+document.querySelector('.layout').classList.add('no-proj');
+</script>
+</body>
+</html>
