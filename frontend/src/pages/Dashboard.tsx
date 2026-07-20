@@ -1,60 +1,24 @@
-import { useEffect, useState } from 'react'
-import { getHealth, listProjects, type HealthRow, type Project } from '../api'
+import { AgentGrid } from '@/components/agents/AgentGrid'
+import { Kanban } from '@/components/tasks/Kanban'
+import { ActivityFeed } from '@/components/ActivityFeed'
 
-export default function Dashboard() {
-  const [health, setHealth] = useState<HealthRow[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [h, p] = await Promise.all([getHealth(), listProjects()])
-        setHealth(h.data)
-        setProjects(p.data)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-    const id = setInterval(load, 30000)
-    return () => clearInterval(id)
-  }, [])
-
-  if (loading) return <div className="card">Loading...</div>
-  if (error) return <div className="card status-error">Error: {error}</div>
-
+export function Dashboard() {
   return (
-    <div>
-      <h2>Dashboard</h2>
-
-      <div className="card">
-        <h3>Projects</h3>
-        <div className="grid-2">
-          {projects.map((p) => (
-            <div key={p.id} className="health-card">
-              <h4>{p.key}</h4>
-              <p>{p.name}</p>
-              <p className="status-ok">{p.status}</p>
-            </div>
-          ))}
-        </div>
+    <div className="p-8 space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold">Agent Control Center</h1>
+        <p className="text-muted-foreground mt-1">Управление агентами, задачами и проектами</p>
       </div>
 
-      <div className="card">
-        <h3>Agent Health</h3>
-        <div className="grid-4">
-          {health.map((h) => (
-            <div key={h.profile} className="health-card">
-              <h4>{h.profile}</h4>
-              <p>{h.current_model || 'not set'}</p>
-              <p className={`status-${h.status}`}>{h.status}</p>
-              <p>{h.latency_ms != null ? `${h.latency_ms} ms` : '-'}</p>
-            </div>
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 bg-card border border-border rounded-2xl p-6">
+          <AgentGrid />
+        </div>
+        <div className="lg:col-span-7 bg-card border border-border rounded-2xl p-6">
+          <Kanban />
+        </div>
+        <div className="lg:col-span-12 bg-card border border-border rounded-2xl p-6">
+          <ActivityFeed />
         </div>
       </div>
     </div>
