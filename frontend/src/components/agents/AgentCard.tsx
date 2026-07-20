@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Cpu, Activity } from 'lucide-react'
+import { Cpu, Activity, Zap } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export function AgentCard({ agent }: { agent: any }) {
@@ -42,6 +42,14 @@ export function AgentCard({ agent }: { agent: any }) {
           </div>
         </div>
       </div>
+
+      <button
+        onClick={() => alert('Handoff started for ' + agent.name)}
+        className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+      >
+        <Zap className="w-4 h-4" />
+        Quick Handoff
+      </button>
     </motion.div>
   )
 }

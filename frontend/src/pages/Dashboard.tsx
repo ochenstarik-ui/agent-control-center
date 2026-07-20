@@ -1,7 +1,7 @@
 import { AgentGrid } from '@/components/agents/AgentGrid'
 import { Kanban } from '@/components/tasks/Kanban'
-import { ActivityFeed } from '@/components/ActivityFeed'
 import { UsageCard } from '@/components/usage/UsageCard'
+import { MemoryCard } from '@/components/memory/MemoryCard'
 import { useAppStore } from '@/store/useAppStore'
 
 export function Dashboard() {
@@ -21,18 +21,21 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 bg-card/80 border border-border rounded-3xl p-6 backdrop-blur-xl">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Live Agents — 7 колонок */}
+        <div className="xl:col-span-7">
           <AgentGrid />
         </div>
-        <div className="lg:col-span-7 bg-card/80 border border-border rounded-3xl p-6 backdrop-blur-xl">
-          <Kanban />
-        </div>
-        <div className="lg:col-span-5">
+
+        {/* Sidebar widgets */}
+        <div className="xl:col-span-5 space-y-6">
           <UsageCard />
+          <MemoryCard />
         </div>
-        <div className="lg:col-span-12 bg-card/80 border border-border rounded-3xl p-6 backdrop-blur-xl">
-          <ActivityFeed />
+
+        {/* Kanban на всю ширину */}
+        <div className="xl:col-span-12">
+          <Kanban />
         </div>
       </div>
     </div>
