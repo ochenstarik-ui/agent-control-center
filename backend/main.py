@@ -5,10 +5,11 @@ Agent Control Center — Control Plane API
 """
 from __future__ import annotations
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from api import runs, agents, memory, skills, connectors
+import asyncio, json
 
 app = FastAPI(
     title="Agent Control Center",
@@ -21,6 +22,21 @@ app.include_router(agents.router)
 app.include_router(memory.router)
 app.include_router(skills.router)
 app.include_router(connectors.router)
+
+# WebSocket для real-time обновлений
+@app.websocket("/ws")
+async def websocket_endpoint(ws: WebSocket):
+    await ws.accept()
+    try:
+        while True:
+            data = await ws.receive_text()
+            msg = json.loads(data)
+            # Echo + broadcast agent status
+            await ws.send_json({"type": "echo", "data": msg})
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
 
 # Web UI (доступен на /ui)
 static = Path(__file__).parent / "static"
