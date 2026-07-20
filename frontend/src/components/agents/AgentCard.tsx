@@ -16,17 +16,18 @@ export function AgentCard({ agent }: { agent: any }) {
             <div className={`w-4 h-4 ${agent.healthy !== false ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
             <div className="text-2xl font-mono font-bold tracking-tighter">{agent.name}</div>
           </div>
-          <div className="mt-1 text-muted-foreground text-sm">{agent.runtime} · {agent.model}</div>
         </div>
         <div className="text-emerald-500 text-xs uppercase tracking-widest font-medium">
           {agent.healthy !== false ? 'ONLINE' : 'OFFLINE'}
         </div>
       </div>
 
-      {/* Account */}
-      <div className="mb-8 flex items-center gap-2 text-xs">
-        <span className="bg-secondary px-3 py-1">{agent.provider}</span>
-        <span className="font-mono text-muted-foreground">{agent.account}</span>
+      {/* Provider + Account */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="bg-secondary px-3 py-1 text-xs">{agent.provider}</span>
+          <span className="font-mono text-muted-foreground">{agent.account}</span>
+        </div>
       </div>
 
       {/* Metrics */}
