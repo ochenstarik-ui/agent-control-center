@@ -7,7 +7,7 @@
 | Статус | **Draft — implementation blocked** |
 | Владелец решения | Product owner / operator |
 | Нормативный документ | Этот файл |
-| Поддерживающие документы | `ARCHITECTURE.md`, `RESEARCH.md`, `OPEN-QUESTIONS.md` |
+| Поддерживающие документы | `ARCHITECTURE.md`, `RESEARCH.md`, `OPEN-QUESTIONS.md`, `adapters/HERMES.md`, `patterns/WORKER_ORCHESTRATION.md`, `patterns/CREDENTIAL_POOLS.md`, `operations/MONITORING.md`, `operations/BACKUP.md` |
 
 > Разработка продукта не начинается до закрытия блокирующих решений, G1 PASS и явного утверждения оператором. Формулировки MUST/SHALL обязательны; SHOULD требуют обоснования отклонения.
 

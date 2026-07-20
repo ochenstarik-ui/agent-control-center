@@ -15,11 +15,35 @@
 
 ## Документы
 
+### Нормативные
 - [Каноническое ТЗ](docs/SPECIFICATION.md)
 - [Архитектура](docs/ARCHITECTURE.md)
-- [Исследование интеграций](docs/RESEARCH.md)
+- [Domain Model](docs/DOMAIN_MODEL.md)
+- [State Machines](docs/STATE_MACHINES.md)
+- [Connector API](docs/CONNECTOR_API.md)
+- [Handoff Contract](docs/HANDOFF_CONTRACT.md)
 - [Матрица трассируемости](docs/TRACEABILITY.md)
 - [Открытые решения](docs/OPEN-QUESTIONS.md)
+
+### Исследования и адаптеры
+- [Исследование интеграций](docs/RESEARCH.md)
+- [Hermes Agent Adapter](docs/adapters/HERMES.md)
+
+### Паттерны
+- [Worker Orchestration](docs/patterns/WORKER_ORCHESTRATION.md)
+- [Credential Pools](docs/patterns/CREDENTIAL_POOLS.md)
+
+### Операции
+- [Scheduler, Events, Errors, SLO](docs/OPERATIONS.md)
+- [Security & Performance](docs/SECURITY_AND_PERFORMANCE.md)
+- [Monitoring & Health-check](docs/operations/MONITORING.md)
+- [Backup & Recovery](docs/operations/BACKUP.md)
+
+### Проектирование
+- [ADR и Sequence Diagrams](docs/ADR_AND_SEQUENCES.md)
+- [Roadmap](docs/ROADMAP.md)
+
+### Участие
 - [Правила участия](CONTRIBUTING.md)
 
 ## Ключевой принцип
