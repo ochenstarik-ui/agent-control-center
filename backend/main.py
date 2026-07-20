@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from api import runs, agents, memory, skills, connectors, tasks
+from api import runs, agents, memory, skills, connectors, tasks, accounts
 import asyncio, json
 
 app = FastAPI(
@@ -23,6 +23,7 @@ app.include_router(memory.router)
 app.include_router(skills.router)
 app.include_router(connectors.router)
 app.include_router(tasks.router)
+app.include_router(accounts.router)
 
 # WebSocket для real-time обновлений
 @app.websocket("/ws")
