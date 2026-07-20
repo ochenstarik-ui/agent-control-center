@@ -22,12 +22,23 @@ export function AgentCard({ agent }: { agent: any }) {
         </div>
       </div>
 
-      {/* Provider + Account */}
+      {/* Provider + Accounts detail */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm mb-3">
           <span className="bg-secondary px-3 py-1 text-xs">{agent.provider}</span>
           <span className="font-mono text-muted-foreground">{agent.account}</span>
         </div>
+        {agent.accounts_detail && (
+          <div className="space-y-1">
+            {agent.accounts_detail.map((acc: any, i: number) => (
+              <div key={i} className="flex items-center gap-1.5 text-xs">
+                <span className={`w-1.5 h-1.5 rounded-full ${acc.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                <span className="text-muted-foreground">{acc.name}</span>
+                {acc.error_code && <span className="text-red-400 font-mono">{acc.error_code}</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Metrics */}

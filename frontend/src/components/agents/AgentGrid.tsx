@@ -31,7 +31,7 @@ export function AgentGrid() {
       const mapped = Object.entries(raw).map(([id, info]: [string, any], i: number) => {
         const prov = info.model?.split('/')[0] || 'opencode-go'
         const provAccounts = byProvider[prov] || []
-        const activeAccs = provAccounts.filter(a => a.ok)
+        const activeAccs = provAccounts.filter(a => a.status === 'ok')
         const totalAccs = provAccounts.length
 
         return {
@@ -50,7 +50,7 @@ export function AgentGrid() {
           provider: providerNames[prov] || prov,
           account: `${activeAccs.length}/${totalAccs} accounts`,
           accounts_detail: provAccounts.map(a => ({
-            name: a.name, ok: a.ok, error_code: a.error_code
+            name: a.name, status: a.status, error_code: a.error_code
           })),
         }
       })
