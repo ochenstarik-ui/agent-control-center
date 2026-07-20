@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.api import runs, agents, memory, skills, connectors
+from api import runs, agents, memory, skills, connectors
 
 app = FastAPI(
     title="Agent Control Center",
