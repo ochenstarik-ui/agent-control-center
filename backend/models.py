@@ -8,6 +8,12 @@ class Agent(BaseModel):
     runtime: str = "?"
     model: str = "?"
     healthy: bool = True
+    cpu: float = 0
+    active_runs: int = 0
+    tokens_used: int = 0
+    tokens_limit: int = 100000
+    budget_used: float = 0
+    budget_limit: float = 50
 
 class AgentUpdate(BaseModel):
     status: Literal["online", "offline", "busy"]

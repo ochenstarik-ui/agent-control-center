@@ -10,15 +10,19 @@ export function AgentGrid() {
     queryFn: async () => {
       const r = await fetch('/api/v1/agents/health')
       const raw = await r.json()
-      const mapped = Object.entries(raw).map(([id, info]: [string, any]) => ({
+      const mapped = Object.entries(raw).map(([id, info]: [string, any], i: number) => ({
         id,
         name: id.replace('worker-', ''),
         status: info.healthy ? ('online' as const) : ('busy' as const),
         runtime: info.model?.split('/')[0] || '?',
         model: info.model?.split('/').pop() || '?',
         healthy: info.healthy,
-        cpu: Math.floor(Math.random() * 60 + 10),
-        activeRuns: Math.floor(Math.random() * 5),
+        cpu: [31, 60, 18, 72][i] || 50,
+        activeRuns: [4, 0, 2, 1][i] || 0,
+        tokens_used: [45800, 124800, 22000, 89000][i] || 50000,
+        tokens_limit: 200000,
+        budget_used: [12.4, 42.5, 5.2, 28.0][i] || 20,
+        budget_limit: 100,
       }))
       setAgents(mapped)
       return mapped

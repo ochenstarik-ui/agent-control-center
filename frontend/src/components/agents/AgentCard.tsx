@@ -1,20 +1,24 @@
 import { motion } from 'framer-motion'
-import { Cpu, Activity, Zap } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Cpu, Activity, Zap, Wallet } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 
 export function AgentCard({ agent }: { agent: any }) {
   const statusColor = {
     online: 'bg-emerald-500',
     busy: 'bg-amber-500',
     offline: 'bg-zinc-500',
-  }[agent.status] || 'bg-zinc-500'
+  }[agent.status] || 'bg-emerald-500'
+
+  const tokenPercent = Math.round((agent.tokens_used / agent.tokens_limit) * 100)
+  const budgetPercent = Math.round((agent.budget_used / agent.budget_limit) * 100)
 
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -4 }}
       className="group bg-card/80 border border-border hover:border-primary/50 rounded-3xl p-6 transition-all duration-300 backdrop-blur-xl"
     >
-      <div className="flex items-start justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
           <div className={`w-5 h-5 rounded-2xl ${statusColor} flex-shrink-0 ring-4 ring-background`} />
           <div>
@@ -22,10 +26,11 @@ export function AgentCard({ agent }: { agent: any }) {
             <div className="text-muted-foreground text-sm">{agent.runtime} · {agent.model}</div>
           </div>
         </div>
-        <Badge variant="outline">{agent.status}</Badge>
+        <div className="text-xs uppercase tracking-widest text-emerald-500 font-medium">{agent.status}</div>
       </div>
 
-      <div className="mt-8 flex gap-8">
+      {/* Main metrics */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="flex items-center gap-3">
           <Cpu className="w-6 h-6 text-muted-foreground" />
           <div>
@@ -33,13 +38,39 @@ export function AgentCard({ agent }: { agent: any }) {
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground -mt-1">CPU %</div>
           </div>
         </div>
-
         <div className="flex items-center gap-3">
           <Activity className="w-6 h-6 text-muted-foreground" />
           <div>
-            <div className="text-3xl font-mono font-semibold tabular-nums">{agent.activeRuns}</div>
+            <div className="text-3xl font-mono font-semibold tabular-nums">{agent.active_runs || agent.activeRuns}</div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground -mt-1">RUNS</div>
           </div>
+        </div>
+      </div>
+
+      {/* Per-agent Usage Limits */}
+      <div className="space-y-4 text-sm border-t border-border pt-5">
+        <div>
+          <div className="flex justify-between mb-1.5">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Zap className="w-4 h-4" /> Tokens
+            </span>
+            <span className="font-mono text-muted-foreground text-xs">
+              {agent.tokens_used?.toLocaleString()} / {agent.tokens_limit?.toLocaleString()}
+            </span>
+          </div>
+          <Progress value={tokenPercent} />
+        </div>
+
+        <div>
+          <div className="flex justify-between mb-1.5">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Wallet className="w-4 h-4" /> Budget
+            </span>
+            <span className="font-mono text-muted-foreground text-xs">
+              ${agent.budget_used} / ${agent.budget_limit}
+            </span>
+          </div>
+          <Progress value={budgetPercent} />
         </div>
       </div>
 
