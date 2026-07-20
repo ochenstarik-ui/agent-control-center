@@ -14,7 +14,10 @@ export function AgentCard({ agent }: { agent: any }) {
         <div>
           <div className="flex items-center gap-3">
             <div className={`w-4 h-4 ${agent.healthy !== false ? 'bg-emerald-500' : 'bg-zinc-500'}`} />
-            <div className="text-2xl font-mono font-bold tracking-tighter">{agent.name}</div>
+            <div>
+              <div className="text-2xl font-mono font-bold tracking-tighter">{agent.name}</div>
+              <div className="text-sm text-muted-foreground">{agent.model}</div>
+            </div>
           </div>
         </div>
         <div className="text-emerald-500 text-xs uppercase tracking-widest font-medium">
