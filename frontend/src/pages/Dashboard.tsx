@@ -9,31 +9,22 @@ export function Dashboard() {
   const online = agents.filter(a => a.healthy).length
 
   return (
-    <div className="p-8 space-y-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tighter">Agent Control Center</h1>
-          <p className="text-muted-foreground mt-1">Управление агентами, задачами и проектами</p>
-        </div>
-        <div className="text-right">
-          <div className="text-emerald-500 text-sm font-medium">{online} online</div>
-          <div className="text-muted-foreground text-xs">v0.2.0</div>
-        </div>
+    <div className="space-y-10">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tighter">Доброе утро, Operator</h2>
+        <p className="text-muted-foreground mt-1">Вот что происходит с вашими агентами</p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Live Agents — 7 колонок */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-7">
           <AgentGrid />
         </div>
 
-        {/* Sidebar widgets */}
-        <div className="xl:col-span-5 space-y-6">
+        <div className="xl:col-span-5 space-y-8">
           <UsageCard />
           <MemoryCard />
         </div>
 
-        {/* Kanban на всю ширину */}
         <div className="xl:col-span-12">
           <Kanban />
         </div>
