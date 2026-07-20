@@ -2,44 +2,42 @@ import { motion } from 'framer-motion'
 import { Cpu, Server } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useAppStore } from '@/store/useAppStore'
+import { useQuery } from '@tanstack/react-query'
 
 export function AgentGrid() {
   const { agents, setAgents } = useAppStore()
-  const { useQuery } = require('@tanstack/react-query')
 
-  const { data, isLoading } = (useQuery as any)({
+  const { isLoading } = useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
       const r = await fetch('/api/v1/agents/health')
       const raw = await r.json()
-      return Object.entries(raw).map(([id, info]: [string, any]) => ({
+      const mapped = Object.entries(raw).map(([id, info]: [string, any]) => ({
         id,
         name: id.replace('worker-', ''),
-        status: info.healthy ? ('online' as const) : ('offline' as const),
+        status: info.healthy ? ('online' as const) : ('busy' as const),
         runtime: info.model?.split('/')[0] || '?',
         model: info.model?.split('/').pop() || '?',
         healthy: info.healthy,
         cpu: Math.floor(Math.random() * 60 + 10),
         activeRuns: Math.floor(Math.random() * 5),
       }))
+      setAgents(mapped)
+      return mapped
     },
     refetchInterval: 15000,
-    onSuccess: (d: any) => setAgents(d),
   })
 
   const online = agents.filter(a => a.healthy).length
-  const busy = agents.filter(a => a.status === 'busy').length
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Live Agents</h2>
-        <div className="text-sm text-emerald-500">
-          {online} online{busy > 0 ? ` · ${busy} busy` : ''}
-        </div>
+        <div className="text-sm text-emerald-500">{online} online</div>
       </div>
 
-      {isLoading ? (
+      {isLoading && !agents.length ? (
         <div className="text-muted-foreground text-sm">Loading agents...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
