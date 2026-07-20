@@ -20,7 +20,17 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--color-background); color: var(--color-foreground); font-family: 'Inter', system-ui, sans-serif; }
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: "tnum";
+  -webkit-font-smoothing: antialiased;
+}
+.card {
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(20px);
+}
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(240 3.7% 25%); border-radius: 3px; }

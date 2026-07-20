@@ -1,6 +1,4 @@
-import { motion } from 'framer-motion'
-import { Cpu, Server } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { AgentCard } from './AgentCard'
 import { useAppStore } from '@/store/useAppStore'
 import { useQuery } from '@tanstack/react-query'
 
@@ -33,57 +31,17 @@ export function AgentGrid() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Live Agents</h2>
-        <div className="text-sm text-emerald-500">{online} online</div>
+        <h2 className="text-xl font-semibold tracking-tight">Live Agents</h2>
+        <div className="text-sm text-emerald-500 font-medium">{online} online</div>
       </div>
 
       {isLoading && !agents.length ? (
         <div className="text-muted-foreground text-sm">Loading agents...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {agents.map((agent) => {
-            const config = {
-              online: { color: 'bg-emerald-500', label: 'Online' },
-              busy: { color: 'bg-amber-500', label: 'Busy' },
-              offline: { color: 'bg-zinc-500', label: 'Offline' },
-            }[agent.status]
-
-            return (
-              <motion.div
-                key={agent.id}
-                whileHover={{ y: -2 }}
-                className="bg-card border border-border rounded-3xl p-6 hover:border-primary/30 transition-all group cursor-pointer"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-4 h-4 rounded-full ${config.color} ring-2 ring-offset-2 ring-offset-card ring-current animate-pulse`} />
-                    <div>
-                      <h3 className="font-semibold text-lg">{agent.name}</h3>
-                      <p className="text-sm text-muted-foreground">{agent.runtime} · {agent.model}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline">{config.label}</Badge>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-6">
-                  <div className="flex items-center gap-3">
-                    <Cpu className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-2xl font-mono">{agent.cpu}%</div>
-                      <div className="text-xs text-muted-foreground">CPU</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Server className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="text-2xl font-mono">{agent.activeRuns}</div>
-                      <div className="text-xs text-muted-foreground">Runs</div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )
-          })}
+          {agents.map((agent) => (
+            <AgentCard key={agent.id} agent={agent} />
+          ))}
         </div>
       )}
     </div>
