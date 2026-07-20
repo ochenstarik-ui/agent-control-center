@@ -1,6 +1,7 @@
 import { AgentGrid } from '@/components/agents/AgentGrid'
 import { Kanban } from '@/components/tasks/Kanban'
 import { ActivityFeed } from '@/components/ActivityFeed'
+import { UsageCard } from '@/components/usage/UsageCard'
 import { useAppStore } from '@/store/useAppStore'
 
 export function Dashboard() {
@@ -26,6 +27,9 @@ export function Dashboard() {
         </div>
         <div className="lg:col-span-7 bg-card/80 border border-border rounded-3xl p-6 backdrop-blur-xl">
           <Kanban />
+        </div>
+        <div className="lg:col-span-5">
+          <UsageCard />
         </div>
         <div className="lg:col-span-12 bg-card/80 border border-border rounded-3xl p-6 backdrop-blur-xl">
           <ActivityFeed />
