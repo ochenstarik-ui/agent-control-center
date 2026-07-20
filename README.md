@@ -43,6 +43,23 @@
 - [ADR и Sequence Diagrams](docs/ADR_AND_SEQUENCES.md)
 - [Roadmap](docs/ROADMAP.md)
 
+### Серия спецификации (внешний аудит)
+- [Executive Summary](docs/spec-series/01_Executive_Summary.md)
+- [Vision & Scope](docs/spec-series/02_Vision_and_Scope.md)
+- [Functional Requirements](docs/spec-series/03_Functional_Requirements.md)
+- [Non-Functional Requirements](docs/spec-series/04_Non_Functional_Requirements.md)
+- [Domain Model (серия)](docs/spec-series/05_Domain_Model.md)
+- [Architecture C4](docs/spec-series/06_Architecture_C4.md)
+- [Database Design](docs/spec-series/07_Database_Design.md)
+- [API Specification](docs/spec-series/08_API_Specification.md)
+- [Event Bus](docs/spec-series/09_Event_Bus.md)
+- [Agent Protocol](docs/spec-series/10_Agent_Protocol.md)
+- [Connector SDK](docs/spec-series/11_Connector_SDK.md)
+- [Security](docs/spec-series/12_Security.md)
+- [Observability](docs/spec-series/13_Observability.md)
+- [ADR Drafts](docs/spec-series/ADR-DRAFTS.md)
+- [Improvement Proposals (рецензия)](docs/spec-series/IMPROVEMENT-PROPOSALS.md)
+
 ### Участие
 - [Правила участия](CONTRIBUTING.md)
 
