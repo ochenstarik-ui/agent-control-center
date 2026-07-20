@@ -25,7 +25,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-8 lg:p-10 max-w-[1600px] mx-auto w-full">
+        <main className="flex-1 overflow-auto p-8 lg:p-10 max-w-screen-2xl mx-auto w-full">
           <Dashboard />
         </main>
       </div>
