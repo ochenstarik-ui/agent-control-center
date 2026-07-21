@@ -26,6 +26,7 @@ export function AgentGrid() {
       const providerNames: Record<string, string> = {
         'opencode-go': 'OpenCode Go', 'gemini': 'Google Gemini',
         'nvidia': 'NVIDIA', 'ollama': 'Ollama', 'cline': 'Cline',
+        'xai': 'xAI Grok',
       }
 
       const mapped = Object.entries(raw).map(([id, info]: [string, any], i: number) => {
@@ -41,11 +42,11 @@ export function AgentGrid() {
           runtime: info.model?.split('/')[0] || '?',
           model: info.model?.split('/').pop() || '?',
           healthy: info.healthy,
-          cpu: [31, 60, 18, 72][i] || 50,
-          activeRuns: [4, 0, 2, 1][i] || 0,
+          cpu: [31, 60, 18, 72, 45][i] || 50,
+          activeRuns: [4, 0, 2, 1, 3][i] || 0,
           tokens_used: activeAccs.length > 0 ? 45800 * activeAccs.length : 10000,
           tokens_limit: 200000,
-          budget_used: [12.4, 42.5, 5.2, 28.0][i] || 20,
+          budget_used: [12.4, 42.5, 5.2, 28.0, 0][i] || 20,
           budget_limit: 100,
           provider: providerNames[prov] || prov,
           account: `${activeAccs.length}/${totalAccs} accounts`,
