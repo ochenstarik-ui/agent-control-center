@@ -78,10 +78,10 @@ DEFAULT_CONFIG = {
             ],
         },
         "worker-fast": {
-            "primary": "grok-cli/grok-4.5",
+            "primary": "xai/grok-4",
             "fallbacks": [
                 "opencode-go/kimi-k2.7-code",
-                "gemini/gemini-3-flash-preview",
+                "nvidia/deepseek-ai/deepseek-v4-pro",
             ],
         },
         "worker-research": {
