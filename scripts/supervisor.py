@@ -65,7 +65,7 @@ DEFAULT_CONFIG = {
     "notify_telegram": True,
     "providers": {
         "opencode-go": {"test_model": "opencode-go/kimi-k2.7-code"},
-        "grok-cli":    {"test_model": "grok-cli/grok-4.5"},
+        "xai":         {"test_model": "xai/grok-4"},
         "gemini":      {"test_model": "gemini/gemini-3-flash-preview"},
         "nvidia":      {"test_model": "nvidia/deepseek-ai/deepseek-v4-pro"},
     },
@@ -73,8 +73,8 @@ DEFAULT_CONFIG = {
         "worker-code": {
             "primary": "opencode-go/kimi-k2.7-code",
             "fallbacks": [
-                "grok-cli/grok-4.5",
-                "gemini/gemini-3-flash-preview",
+                "xai/grok-4",
+                "nvidia/deepseek-ai/deepseek-v4-pro",
             ],
         },
         "worker-fast": {
