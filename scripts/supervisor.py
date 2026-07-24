@@ -62,7 +62,7 @@ DEFAULT_CONFIG = {
     "cooldown_minutes": 30,
     "api_key": "sk-a345af809e8a26f0693b9405344edc8adc5b5a96",  # 9Router key
     "health_url": "http://localhost:20127/v1/chat/completions",
-    "notify_telegram": True,
+    "notify_telegram": False,
     "providers": {
         "opencode-go": {"test_model": "opencode-go/kimi-k2.7-code"},
         "xai":         {"test_model": "xai/grok-4"},
