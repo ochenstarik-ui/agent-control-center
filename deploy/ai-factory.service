@@ -8,10 +8,10 @@ Type=simple
 User=ochenstarik
 Group=krona-agents
 WorkingDirectory=/srv/projects/Agent projects/agent-control-center
-Environment=PYTHONPATH=/srv/projects/Agent projects/agent-control-center/backend
+Environment="PYTHONPATH=/srv/projects/Agent projects/agent-control-center/backend"
 Environment=FACTORY_DB=/srv/projects/ai-factory-state/runtime.db
 Environment=FACTORY_MAX_ACTIVE_PROJECTS=2
-ExecStart=/srv/projects/Agent projects/agent-control-center/.venv/bin/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
+ExecStart="/srv/projects/Agent projects/agent-control-center/.venv/bin/python" -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
