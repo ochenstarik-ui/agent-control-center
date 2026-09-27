@@ -1,0 +1,30 @@
+[Unit]
+Description=Krona AI Factory compatibility dispatcher
+After=network-online.target ai-factory.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/projects/Agent projects/agent-control-center
+Environment="PYTHONPATH=/srv/projects/Agent projects/agent-control-center/backend"
+Environment=FACTORY_DB=/srv/projects/ai-factory-state/runtime.db
+Environment=FACTORY_PROJECT_ID=business-platform
+Environment="FACTORY_REPO=/srv/projects/Agent projects/business-platform"
+Environment="FACTORY_LAUNCHER=/srv/projects/Agent projects/business-platform/agents/pair/cron/lane-run.sh"
+Environment=FACTORY_LANES=pair,pair2,pair3,pair6
+Environment=FACTORY_MAX_ACTIVE_PROJECTS=2
+Environment=FACTORY_MAX_DEV_TEST_PAIRS=4
+Environment=FACTORY_DISPATCH_INTERVAL=300
+Environment=FACTORY_RUN_TIMEOUT=3600
+ExecStart="/srv/projects/Agent projects/agent-control-center/.venv/bin/python" -m factory.dispatcher
+Restart=always
+RestartSec=10
+TimeoutStopSec=75
+KillMode=control-group
+# The established compatibility launcher uses tightly scoped sudo rules to
+# enter provider account profiles. NoNewPrivileges would block those existing
+# rules and is therefore intentionally omitted for this adapter service.
+PrivateTmp=false
+
+[Install]
+WantedBy=default.target

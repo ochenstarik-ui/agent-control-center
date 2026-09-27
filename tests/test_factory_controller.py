@@ -61,3 +61,42 @@ def test_bootstrap_is_complete_and_persistent(factory, tmp_path):
     assert boot["project"]["status"] == "ACTIVE"
     assert boot["tasks"][0]["id"] == task["id"]
     assert boot["sources_of_truth"]["code"] == "git"
+
+
+def test_external_task_reconciliation_is_idempotent(factory):
+    add_project(factory, "business-platform")
+    factory.activate_project("business-platform")
+    first = factory.upsert_external_task(
+        "business-platform",
+        "pair:TASK-1.md",
+        "TASK-1",
+        "Do the work",
+        "pair",
+        "agents/pair/coder-inbox/TASK-1.md",
+        "QUEUED",
+    )
+    second = factory.upsert_external_task(
+        "business-platform",
+        "pair:TASK-1.md",
+        "TASK-1 renamed",
+        "Do the work",
+        "pair",
+        "agents/pair/coder-inbox/TASK-1.md",
+        "TEST",
+    )
+    assert first["id"] == second["id"]
+    assert second["status"] == "TEST"
+    assert len(factory.list_tasks("business-platform")) == 1
+
+
+def test_dispatch_run_survives_restart(factory, tmp_path):
+    add_project(factory, "business-platform")
+    factory.activate_project("business-platform")
+    task = factory.create_task("business-platform", "Work", "Description", [])
+    factory.register_worker("pair-coder", "antigravity-compat", "dynamic", {"coding": True})
+    run_id = factory.begin_dispatch_run("business-platform", task["id"], "pair-coder", "pair", "codex")
+    factory.finish_dispatch_run(run_id, "SUCCEEDED", 0, "ok")
+    restarted = FactoryController(tmp_path / "runtime.db")
+    runs = restarted.list_dispatch_runs("business-platform")
+    assert runs[0]["id"] == run_id
+    assert runs[0]["status"] == "SUCCEEDED"

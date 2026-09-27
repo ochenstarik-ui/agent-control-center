@@ -7,7 +7,6 @@ from pathlib import Path
 
 from .db import Database
 
-
 TASK_TRANSITIONS = {
     "QUEUED": {"DEV", "FAILED"},
     "DEV": {"TEST", "FAILED", "ESCALATED"},
@@ -95,7 +94,10 @@ class FactoryController:
         task_id, stamp = f"task-{uuid.uuid4().hex[:12]}", now()
         with self.db.transaction() as conn:
             conn.execute(
-                "INSERT INTO tasks VALUES (?,?,?,?,?, 'QUEUED',?,0,?,?)",
+                """INSERT INTO tasks(
+                       id,project_id,title,description,acceptance_json,status,
+                       priority,attempt,created_at,updated_at
+                   ) VALUES (?,?,?,?,?, 'QUEUED',?,0,?,?)""",
                 (task_id, project_id, title, description, json.dumps(acceptance, ensure_ascii=False), priority, stamp, stamp),
             )
             self._event(conn, "task.created", project_id=project_id, task_id=task_id)
@@ -109,6 +111,99 @@ class FactoryController:
             result = dict(row)
             result["acceptance"] = json.loads(result.pop("acceptance_json"))
             return result
+
+    def list_tasks(self, project_id: str | None = None):
+        query = "SELECT * FROM tasks"
+        args: tuple[str, ...] = ()
+        if project_id:
+            query += " WHERE project_id=?"
+            args = (project_id,)
+        query += " ORDER BY priority,created_at"
+        with self.db.connect() as conn:
+            rows = []
+            for row in conn.execute(query, args):
+                item = dict(row)
+                item["acceptance"] = json.loads(item.pop("acceptance_json"))
+                rows.append(item)
+            return rows
+
+    def upsert_external_task(
+        self,
+        project_id: str,
+        external_ref: str,
+        title: str,
+        description: str,
+        lane: str,
+        source_path: str,
+        observed_status: str,
+        priority: int = 100,
+    ):
+        self.get_project(project_id)
+        stamp = now()
+        with self.db.transaction() as conn:
+            row = conn.execute(
+                "SELECT id,status FROM tasks WHERE project_id=? AND external_ref=?",
+                (project_id, external_ref),
+            ).fetchone()
+            if row:
+                task_id = row["id"]
+                conn.execute(
+                    """UPDATE tasks SET title=?,description=?,lane=?,source_path=?,
+                       priority=?,updated_at=? WHERE id=?""",
+                    (title, description, lane, source_path, priority, stamp, task_id),
+                )
+            else:
+                task_id = f"task-{uuid.uuid4().hex[:12]}"
+                conn.execute(
+                    """INSERT INTO tasks(
+                           id,project_id,title,description,acceptance_json,status,
+                           priority,attempt,created_at,updated_at,external_ref,lane,source_path
+                       ) VALUES (?,?,?,?,?,'QUEUED',?,0,?,?,?,?,?)""",
+                    (
+                        task_id,
+                        project_id,
+                        title,
+                        description,
+                        "[]",
+                        priority,
+                        stamp,
+                        stamp,
+                        external_ref,
+                        lane,
+                        source_path,
+                    ),
+                )
+                self._event(
+                    conn,
+                    "task.reconciled",
+                    project_id=project_id,
+                    task_id=task_id,
+                    payload={"external_ref": external_ref, "lane": lane},
+                )
+        return self.reconcile_task(task_id, observed_status, "compatibility repository state")
+
+    def reconcile_task(self, task_id: str, observed_status: str, reason: str = ""):
+        target = observed_status.upper()
+        if target not in TASK_TRANSITIONS:
+            raise ConflictError(f"unknown task state {target}")
+        with self.db.transaction() as conn:
+            row = conn.execute("SELECT project_id,status,attempt FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if not row:
+                raise NotFoundError(task_id)
+            if row["status"] != target:
+                attempt = row["attempt"] + (1 if target == "DEV" and row["status"] != "REWORK" else 0)
+                conn.execute(
+                    "UPDATE tasks SET status=?,attempt=?,updated_at=? WHERE id=?",
+                    (target, attempt, now(), task_id),
+                )
+                self._event(
+                    conn,
+                    "task.reconciled_transition",
+                    project_id=row["project_id"],
+                    task_id=task_id,
+                    payload={"from": row["status"], "to": target, "reason": reason},
+                )
+        return self.get_task(task_id)
 
     def transition_task(self, task_id: str, target: str, reason: str = ""):
         target = target.upper()
@@ -141,7 +236,19 @@ class FactoryController:
         lease_id, acquired = f"lease-{uuid.uuid4().hex[:12]}", datetime.now(timezone.utc)
         expires = acquired + timedelta(seconds=ttl_seconds)
         with self.db.transaction() as conn:
+            expired_workers = [
+                row[0]
+                for row in conn.execute(
+                    "SELECT worker_id FROM leases WHERE released_at IS NULL AND expires_at<=?",
+                    (now(),),
+                )
+            ]
             conn.execute("UPDATE leases SET released_at=? WHERE released_at IS NULL AND expires_at<=?", (now(), now()))
+            if expired_workers:
+                conn.executemany(
+                    "UPDATE workers SET status='READY',updated_at=? WHERE id=? AND status='BUSY'",
+                    [(now(), worker_id) for worker_id in expired_workers],
+                )
             worker = conn.execute("SELECT status FROM workers WHERE id=?", (worker_id,)).fetchone()
             if not worker:
                 raise NotFoundError(worker_id)
@@ -149,6 +256,11 @@ class FactoryController:
                 raise ConflictError(f"worker {worker_id} is {worker['status']}")
             if conn.execute("SELECT 1 FROM leases WHERE worker_id=? AND released_at IS NULL", (worker_id,)).fetchone():
                 raise ConflictError(f"worker {worker_id} already leased")
+            task = conn.execute("SELECT project_id FROM tasks WHERE id=?", (task_id,)).fetchone()
+            if not task:
+                raise NotFoundError(task_id)
+            if task["project_id"] != project_id:
+                raise ConflictError(f"task {task_id} does not belong to {project_id}")
             conn.execute("INSERT INTO leases VALUES (?,?,?,?,?,?,?,NULL)",
                          (lease_id, worker_id, project_id, task_id, role, acquired.isoformat(), expires.isoformat()))
             conn.execute("UPDATE workers SET status='BUSY', updated_at=? WHERE id=?", (now(), worker_id))
@@ -165,12 +277,68 @@ class FactoryController:
             conn.execute("UPDATE workers SET status='READY', updated_at=? WHERE id=?", (now(), row["worker_id"]))
             self._event(conn, "lease.released", project_id=row["project_id"], task_id=row["task_id"], worker_id=row["worker_id"], payload={"lease_id": lease_id})
 
+    def begin_dispatch_run(self, project_id: str, task_id: str, worker_id: str, lane: str, role: str):
+        run_id = f"run-{uuid.uuid4().hex[:12]}"
+        with self.db.transaction() as conn:
+            conn.execute(
+                """INSERT INTO dispatch_runs(
+                       id,project_id,task_id,worker_id,lane,role,status,started_at
+                   ) VALUES (?,?,?,?,?,?,'RUNNING',?)""",
+                (run_id, project_id, task_id, worker_id, lane, role, now()),
+            )
+            self._event(
+                conn,
+                "dispatch.started",
+                project_id=project_id,
+                task_id=task_id,
+                worker_id=worker_id,
+                payload={"run_id": run_id, "lane": lane, "role": role},
+            )
+        return run_id
+
+    def finish_dispatch_run(self, run_id: str, status: str, exit_code: int | None, output_tail: str):
+        final = status.upper()
+        if final not in {"SUCCEEDED", "FAILED", "TIMED_OUT"}:
+            raise ConflictError(f"invalid run status {final}")
+        with self.db.transaction() as conn:
+            row = conn.execute(
+                "SELECT project_id,task_id,worker_id,lane,role FROM dispatch_runs WHERE id=?",
+                (run_id,),
+            ).fetchone()
+            if not row:
+                raise NotFoundError(run_id)
+            conn.execute(
+                """UPDATE dispatch_runs SET status=?,finished_at=?,exit_code=?,output_tail=?
+                   WHERE id=?""",
+                (final, now(), exit_code, output_tail[-12000:], run_id),
+            )
+            self._event(
+                conn,
+                "dispatch.finished",
+                project_id=row["project_id"],
+                task_id=row["task_id"],
+                worker_id=row["worker_id"],
+                payload={"run_id": run_id, "status": final, "exit_code": exit_code},
+            )
+
+    def list_dispatch_runs(self, project_id: str | None = None, limit: int = 100):
+        query = "SELECT * FROM dispatch_runs"
+        args: list[object] = []
+        if project_id:
+            query += " WHERE project_id=?"
+            args.append(project_id)
+        query += " ORDER BY started_at DESC LIMIT ?"
+        args.append(max(1, min(limit, 500)))
+        with self.db.connect() as conn:
+            return [dict(row) for row in conn.execute(query, args)]
+
     def bootstrap(self, project_id: str):
         project = self.get_project(project_id)
         with self.db.connect() as conn:
-            tasks = [dict(r) for r in conn.execute("SELECT id,title,status,priority,attempt,updated_at FROM tasks WHERE project_id=? ORDER BY priority,created_at", (project_id,))]
+            tasks = [dict(r) for r in conn.execute("SELECT id,title,status,priority,attempt,lane,external_ref,source_path,updated_at FROM tasks WHERE project_id=? ORDER BY priority,created_at", (project_id,))]
             leases = [dict(r) for r in conn.execute("SELECT * FROM leases WHERE project_id=? AND released_at IS NULL AND expires_at>?", (project_id, now()))]
-        return {"schema_version": 1, "project": project, "tasks": tasks, "active_leases": leases,
+            runs = [dict(r) for r in conn.execute("SELECT id,task_id,worker_id,lane,role,status,started_at,finished_at,exit_code FROM dispatch_runs WHERE project_id=? ORDER BY started_at DESC LIMIT 25", (project_id,))]
+        return {"schema_version": 2, "project": project, "tasks": tasks, "active_leases": leases, "recent_runs": runs,
                 "sources_of_truth": {"code": "git", "runtime": str(self.db.path), "memory": project["memory_path"], "secrets": "provider-local"}}
 
     def status(self):

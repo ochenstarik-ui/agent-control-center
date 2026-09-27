@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from factory.service import ConflictError, FactoryController, NotFoundError
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-
-from factory.service import ConflictError, FactoryController, NotFoundError
 
 router = APIRouter(prefix="/api/v1/factory", tags=["factory"])
 controller = FactoryController(
@@ -64,6 +63,16 @@ def call(method, *args, **kwargs):
 @router.get("/status")
 def status():
     return controller.status()
+
+
+@router.get("/tasks")
+def list_tasks(project_id: str | None = None):
+    return {"tasks": controller.list_tasks(project_id)}
+
+
+@router.get("/dispatch-runs")
+def list_dispatch_runs(project_id: str | None = None, limit: int = 100):
+    return {"runs": controller.list_dispatch_runs(project_id, limit)}
 
 
 @router.post("/projects")
